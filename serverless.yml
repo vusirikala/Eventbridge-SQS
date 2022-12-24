@@ -10,8 +10,18 @@ plugins:
   - serverless-iam-roles-per-function
 
 functions:
-  hello:
+  processEventsLambda:
+    handler: functions/processEvents.processEvents
+    events: 
+      - sqs:
+          arn: {"Fn::GetAtt" : [ "Queue", "Arn" ]}
+          batchSize: 10
+          functionResponseType: "ReportBatchItemFailures"
+
+  putEventsLambda:
     handler: functions/putEvents.putEvents
+    environment:
+      EventBusName: !Ref EventBus
     events: 
       - http:
           path: /generate
