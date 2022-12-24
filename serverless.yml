@@ -8,6 +8,17 @@ provider:
 
 plugins: 
   - serverless-iam-roles-per-function
+  - serverless-apigateway-service-proxy
+
+custom:
+  apiGatewayServiceProxies:       # API Gateway forwards message directly to EventBridge
+    - eventbridge:  # source and detailType are hardcoded; detail defaults to POST body
+        path: /eventbridge
+        method: post
+        source: 'fuel-app'
+        detailType: 'user-signup'
+        eventBusName: { Ref: 'EventBus' }
+        cors: true
 
 functions:
   processEventsLambda:
@@ -21,7 +32,7 @@ functions:
   putEventsLambda:
     handler: functions/putEvents.putEvents
     environment:
-      EventBusName: !Ref EventBus
+      EventBusName: { Ref: 'EventBus' }
     events: 
       - http:
           path: /generate
@@ -73,7 +84,7 @@ resources:
       Type: AWS::SQS::QueuePolicy
       Properties:
         Queues: 
-          - !Ref Queue
+          - { Ref: 'Queue' }
         PolicyDocument: 
           Statement: 
             - Action: "SQS:SendMessage"
@@ -84,4 +95,4 @@ resources:
   Outputs:
     EventBusName:
       Description: "Event Bus"
-      Value: !Ref EventBus
+      Value: { Ref: 'EventBus' }
