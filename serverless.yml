@@ -44,8 +44,16 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: QR_MESSAGE_QUEUE
-
+        RedrivePolicy:
+          deadLetterTargetArn: {"Fn::GetAtt" : [ "DeadLetterQueue", "Arn" ]}
+          maxReceiveCount: 1           # Max number of retries before sending the message to Dead Letter Queue
     
+    DeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: QR_MESSAGE_DLQ
+    
+
     TargetSQSRule:                    # Event of EventBridge
       Type: AWS::Events::Rule
       Properties: 
@@ -70,10 +78,9 @@ resources:
           Statement: 
             - Action: "SQS:SendMessage"
               Effect: "Allow"
-              Resource: {"Fn::GetAtt" : [ "EventBus", "Arn" ]}
+              Resource: {"Fn::GetAtt" : [ "Queue", "Arn" ]}
               Principal:                  # Principal is required for the resource-based IAM policies. What are the entitites that are allowed to use this permission? The principal could be any AWS service, IAM user, AWS account, another AWS account, etc. 
-                Service: 
-                  - events.amazonaws.com     # Principal for eventbridge
+                Service: events.amazonaws.com     # Principal for eventbridge
   Outputs:
     EventBusName:
       Description: "Event Bus"
